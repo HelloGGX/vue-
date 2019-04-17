@@ -5,8 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Vue</title>
+    <style>
+        /*********如果padding的两边宽度只和大于width,那么实际宽度为padding的left和right之和***********/
+    .box {
+        box-sizing:border-box;
+        padding: 100px;
+        width: 20px;
+        background-color: aqua;
+    }
+    
+    </style>
 </head>
 <body>
-    <script src="./vue2.0.js"></script>
+    
+    <div class="box">
+        hahahaha
+    </div>
+    <script>
+        // var box = document.getElementsByClassName('box')[0].clientWidth
+        // console.log(box)
+    </script>
+    <script src="./vue.js"></script>
 </body>
 </html>
