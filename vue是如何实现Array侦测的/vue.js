@@ -59,6 +59,14 @@ function defineReactive(data, key, val) {
         }
     })
 }
+function def(obj,key,val,enumerable) { 
+    Object.defineProperty(obj, key, {
+        value: val,
+        enumerable: !!enumerable,
+        writable: true,
+        configurable:true
+    })
+}
 function protoAugment(target,src,keys) { 
     target._proto_ = src
 }
