@@ -59,17 +59,38 @@ function isObject(value) {
 function hasOwn(obj,key) { 
     return Object.prototype.hasOwnProperty.call(obj,key)
 }
+const bailRE = /[^\w.$]/
+function parsePath(path) {
+    if (bailRE.test(path)) { 
+        return
+    }
+    const segments = path.split('.')
+    return function (obj) { 
+        for (let i = 0; i < segments.length;i++) { 
+            if (!obj) { 
+                return
+            }
+            obj = obj[segments[i]]
+        }
+        return obj
+    }
+}
+let uid = 0;
 class Dep {
     constructor() {
-        this.subscriber = [] //订阅者数组
+        this.id = uid++
+        this.subs = [] //订阅者数组
+    }
+    addSub(sub) {
+        this.subs.push(sub);
     }
     depend() {
-        if (Dep.target && !this.subscriber.includes(Dep.target)) {
-            this.subscriber.push(Dep.target)
+        if (Dep.target) {
+            Dep.target.addDep(this)
         }
     }
     notify() {
-        const subs = this.subscriber.slice()
+        const subs = this.subs.slice()
         subs.forEach(sub => sub.update())
     }
 }
@@ -138,8 +159,12 @@ function defineReactive(data, key, val) {
 class Watcher { //中介
     constructor(vm, expOrFn, cb) {//vm只是vue的实例
         this.vm = vm
+        this.deps = []
+        this.depIds = new Set()
         if (typeof expOrFn === 'function') {
-            this.getter = expOrFn;
+            this.getter = expOrFn; //当expOrFn是个函数
+        } else { 
+            this.getter = parsePath(expOrFn)//当expOrFn是个属性访问路径（如：a.b.c）
         }
         this.cb = cb
         this.value = this.get()
@@ -150,6 +175,14 @@ class Watcher { //中介
         Dep.target = undefined
         return value
     }
+    addDep(dep) { 
+        const id = dep.id
+        if (!this.depIds.has(id)) { 
+            this.depIds.add(id)
+            this.deps.push(dep)
+            dep.addSub(this)
+        }
+    }
     update() {
         const oldVal = this.value
         this.value = this.get()
@@ -158,10 +191,10 @@ class Watcher { //中介
 }
 
 
-let data = { price: 5, quality: [10] }
+let data = { price: {data:7}, quality: [10] }
 let total = 0
 const updateComponent = () => {
-    total = data.price * data.quality[0]
+    total = data.price.data * data.quality[0]
     return total
 }
 
@@ -172,7 +205,7 @@ new Watcher(window, updateComponent, (newVal, oldVal) => {
 });
 
 console.log(total)
-data.price = 12
+data.price.data = 12
 console.log(total)
-data.quality.splice(0,1,100)
-console.log(total)
+// data.quality.splice(0,1,100)
+// console.log(total)
